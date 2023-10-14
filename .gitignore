@@ -1,0 +1,19 @@
+# Node.js 관련
+node_modules/
+npm-debug.log
+
+# 환경 변수 파일
+.env
+
+# IDE/편집기 관련
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# ESLint
+.eslintcache
