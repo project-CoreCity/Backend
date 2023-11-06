@@ -1,6 +1,8 @@
 require("dotenv").config();
 const createError = require("http-errors");
 const express = require("express");
+const corsMiddleware = require("./middlewares/cors");
+require("./config/firebaseAdmin");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -11,6 +13,8 @@ const usersRouter = require("./routes/users");
 const connectDatabase = require("./config/database");
 
 const app = express();
+
+app.use(corsMiddleware);
 
 connectDatabase();
 
@@ -25,7 +29,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/api/v1/user", usersRouter);
 
 app.use(function (next) {
   next(createError(404));
