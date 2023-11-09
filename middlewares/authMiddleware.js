@@ -1,9 +1,13 @@
 const admin = require("firebase-admin");
 const User = require("../models/User");
 
-const verifyToken = async (req, res) => {
+module.exports.verifyToken = async (req, res, next) => {
   try {
-    const { token } = req.body;
+    const token =
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : req.body.token;
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name } = decodedToken;
 
@@ -12,27 +16,11 @@ const verifyToken = async (req, res) => {
     if (!user) {
       user = new User({ email, name });
       await user.save();
-
-      return res.status(201).json({
-        status: "Creation success",
-        message: "Your information has been added successfully.",
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-        },
-      });
     }
 
-    return res.status(200).json({
-      status: "Sign in success",
-      message: "Welcome back!",
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-      },
-    });
+    req.user = user;
+
+    next();
   } catch (error) {
     if (error.code === "auth/invalid-argument") {
       return res
@@ -58,5 +46,3 @@ const verifyToken = async (req, res) => {
     });
   }
 };
-
-module.exports = verifyToken;
