@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
+  uid: {
+    type: String,
+    required: [true, "Uid is required"],
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
