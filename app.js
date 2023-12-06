@@ -1,46 +1,45 @@
 require("dotenv").config();
-const createError = require("http-errors");
+require("./src/config/firebaseAdmin");
 const express = require("express");
-const corsMiddleware = require("./middlewares/cors");
-require("./config/firebaseAdmin");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-
-const indexRouter = require("./routes/index");
-const usersRouter = require("./routes/users");
-
-const connectDatabase = require("./config/database");
-
+const usersRouter = require("./src/routes/users");
+const connectDatabase = require("./src/config/database");
+const corsMiddleware = require("./src/middlewares/cors");
+const setupMonitoringSocket = require("./src/sockets/monitor");
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.LOCALHOST_FRONTEND,
+    methods: "GET",
+  },
+});
 
-app.use(corsMiddleware);
+setupMonitoringSocket(io);
 
 connectDatabase();
 
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
-
+app.use(corsMiddleware);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-
 app.use(express.static(path.join(__dirname, "public")));
-
-app.use("/", indexRouter);
 app.use("/api/v1/users", usersRouter);
-
-app.use(function (req, res, next) {
-  next(createError(404));
+app.use((req, res) => {
+  res.status(404).send("Not Found");
+});
+app.use((err, req, res) => {
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message,
+      status: err.status,
+    },
+  });
 });
 
-app.use(function (err, req, res) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  res.status(err.status || 500);
-  res.render("error");
-});
-
-module.exports = app;
+module.exports = { app, httpServer, io };
