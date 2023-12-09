@@ -26,6 +26,8 @@ const setupMonitoringSocket = (io) => {
       `Authenticated client connected: ${socket.id}, User: ${socket.user.email}`,
     );
 
+    let isPrometheusDataAvailable = true;
+
     const sendData = async () => {
       try {
         const cpuMetrics = await getCpuMetrics(serverAddress);
@@ -38,6 +40,11 @@ const setupMonitoringSocket = (io) => {
         const networkMetricsDB = await getDbNetworkMetrics(serverAddress);
         const diskMetricsDB = await getDbDiskMetrics(serverAddress);
 
+        if (!isPrometheusDataAvailable) {
+          isPrometheusDataAvailable = true;
+          console.log("Prometheus data is now available");
+        }
+
         socket.emit("monitoringData", {
           cpuMetrics,
           memoryMetrics,
@@ -49,11 +56,17 @@ const setupMonitoringSocket = (io) => {
           diskMetricsDB,
         });
       } catch (error) {
-        console.error("Error fetching monitoring data: ", error);
+        if (isPrometheusDataAvailable) {
+          isPrometheusDataAvailable = false;
+          console.log("Prometheus data is currently unavailable");
+        }
+        socket.emit("monitoringData", {
+          error: "Monitoring data fetch failed",
+        });
       }
     };
 
-    const intervalId = setInterval(sendData, 5000);
+    const intervalId = setInterval(sendData, 3000);
 
     socket.on("disconnect", () => {
       console.log(`Client disconnected: ${socket.id}`);
