@@ -56,11 +56,11 @@ const getCpuMetrics = async (address) => {
 
 const getMemoryMetrics = async (address) => {
   const totalMemoryQuery = `node_memory_total_bytes`;
-  const memoryUsedQuery = `node_memory_total_bytes - node_memory_free_bytes`;
+  const memoryUsedQuery = `(node_memory_total_bytes - node_memory_free_bytes) / node_memory_total_bytes * 100`;
   const swapUsedQuery = `node_memory_swap_used_bytes`;
   const memoryFreeQuery = `node_memory_free_bytes`;
 
-  const memoryUsed = convertBytes(
+  const memoryUsed = Math.round(
     await queryPrometheus(memoryUsedQuery, address),
   );
   const memoryFree = convertBytes(

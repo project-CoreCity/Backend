@@ -66,7 +66,7 @@ const setupMonitoringSocket = (io) => {
       }
     };
 
-    const intervalId = setInterval(sendData, 3000);
+    const intervalId = setInterval(sendData, 5000);
 
     socket.on("disconnect", () => {
       console.log(`Client disconnected: ${socket.id}`);
