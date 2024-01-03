@@ -4,8 +4,9 @@ const UserServerRelation = require("../models/UserServerRelation");
 const User = require("../models/User");
 
 const getUserInformation = async (req, res) => {
+  const uid = req.params.uid;
+
   try {
-    const uid = req.params.uid;
     const userInfo = await User.findOne({ uid });
 
     if (!userInfo) {
@@ -27,15 +28,15 @@ const getUserInformation = async (req, res) => {
 };
 
 const getUserServerAddresses = async (req, res) => {
+  const userId = req.params.userId;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res
+      .status(400)
+      .json({ status: "Error", message: "Invalid user ID." });
+  }
+
   try {
-    const userId = req.params.userId;
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ status: "Error", message: "Invalid user ID." });
-    }
-
     const relation = await UserServerRelation.find({ userId })
       .populate("addressId")
       .exec();
@@ -61,16 +62,16 @@ const getUserServerAddresses = async (req, res) => {
 };
 
 const registerServerAddress = async (req, res) => {
+  const userId = req.params.userId;
+  const { serverAddress } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res
+      .status(400)
+      .json({ status: "Error", message: "Invalid user ID." });
+  }
+
   try {
-    const userId = req.params.userId;
-    const { serverAddress } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res
-        .status(400)
-        .json({ status: "Error", message: "Invalid user ID." });
-    }
-
     let address = await ServerAddress.findOne({ address: serverAddress });
     let isNewAddress = false;
 
@@ -109,7 +110,7 @@ const registerServerAddress = async (req, res) => {
     await relation.save();
 
     res.status(200).json({
-      status: "success",
+      status: "Success",
       message: "Server address added successfully.",
     });
   } catch (error) {

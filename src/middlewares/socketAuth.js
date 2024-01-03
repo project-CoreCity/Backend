@@ -2,8 +2,9 @@ const admin = require("firebase-admin");
 const User = require("../models/User");
 
 module.exports.socketAuth = async (socket, next) => {
+  const token = socket.handshake.query.token;
+
   try {
-    const token = socket.handshake.query.token;
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email } = decodedToken;
 

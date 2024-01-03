@@ -2,12 +2,12 @@ const admin = require("firebase-admin");
 const User = require("../models/User");
 
 module.exports.verifyToken = async (req, res, next) => {
+  const token =
+    req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
+      : req.body.token;
+
   try {
-    const token =
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-        ? req.headers.authorization.split(" ")[1]
-        : req.body.token;
     const decodedToken = await admin.auth().verifyIdToken(token);
     const { email, name, uid } = decodedToken;
 
