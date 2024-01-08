@@ -2,20 +2,28 @@ const ServerAddress = require("../models/ServerAddress");
 const UserServerRelation = require("../models/UserServerRelation");
 
 const getPendingRequests = async (req, res) => {
-  const addressId = req.params.addressId;
+  const addressIds = req.query.id;
 
   try {
-    const requests = await UserServerRelation.find({
-      addressId,
-      isAdmin: false,
-    }).lean();
+    const requestsPromises = addressIds.map((addressId) =>
+      UserServerRelation.find({ addressId, isAdmin: false }).lean(),
+    );
 
-    const addressInfo = await ServerAddress.findById(addressId);
+    const addressesPromises = addressIds.map((addressId) =>
+      ServerAddress.findById(addressId).lean(),
+    );
+
+    const requestsResults = await Promise.all(requestsPromises);
+    const addressesResults = await Promise.all(addressesPromises);
+
+    const combinedResults = requestsResults.map((requests, index) => ({
+      requests: requests,
+      address: addressesResults[index].address,
+    }));
 
     res.status(200).json({
       isAdmin: true,
-      requests: requests,
-      address: addressInfo.address,
+      data: combinedResults,
     });
   } catch (error) {
     console.error(error);
