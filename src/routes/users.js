@@ -10,7 +10,7 @@ const {
 
 router.route("/auth-token").post(verifyToken, authenticateUser);
 
-router.route("/:uid").get(verifyToken, getUserInformation);
+router.route("/").get(verifyToken, getUserInformation);
 
 router
   .route("/:userId/server-addresses")

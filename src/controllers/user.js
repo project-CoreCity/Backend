@@ -4,7 +4,7 @@ const UserServerRelation = require("../models/UserServerRelation");
 const User = require("../models/User");
 
 const getUserInformation = async (req, res) => {
-  const uid = req.params.uid;
+  const uid = req.user.uid;
 
   try {
     const userInfo = await User.findOne({ uid });
