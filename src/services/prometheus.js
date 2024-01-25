@@ -55,10 +55,22 @@ const getCpuMetrics = async (address) => {
 };
 
 const getMemoryMetrics = async (address) => {
-  const totalMemoryQuery = `node_memory_total_bytes`;
-  const memoryUsedQuery = `(node_memory_total_bytes - node_memory_free_bytes) / node_memory_total_bytes * 100`;
-  const swapUsedQuery = `node_memory_swap_used_bytes`;
-  const memoryFreeQuery = `node_memory_free_bytes`;
+  const totalMemoryQuery =
+    address === "http://localhost:9090/"
+      ? `node_memory_total_bytes`
+      : `node_memory_MemTotal_bytes`;
+  const memoryUsedQuery =
+    address === "http://localhost:9090/"
+      ? `(node_memory_total_bytes - node_memory_free_bytes) / node_memory_total_bytes * 100`
+      : `(node_memory_MemTotal_bytes - node_memory_MemFree_bytes) / node_memory_MemTotal_bytes * 100`;
+  const swapUsedQuery =
+    address === "http://localhost:9090/"
+      ? `node_memory_swap_used_bytes`
+      : `node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes`;
+  const memoryFreeQuery =
+    address === "http://localhost:9090/"
+      ? `node_memory_free_bytes`
+      : `node_memory_MemFree_bytes`;
 
   const memoryUsed = Math.round(
     await queryPrometheus(memoryUsedQuery, address),
@@ -80,8 +92,8 @@ const getMemoryMetrics = async (address) => {
 };
 
 const getNetworkMetrics = async (address) => {
-  const networkReceivedRateQuery = `sum(rate(node_network_receive_bytes_total[10s]))`;
-  const networkTransmitRateQuery = `sum(rate(node_network_transmit_bytes_total[10s]))`;
+  const networkReceivedRateQuery = `sum(rate(node_network_receive_bytes_total[30s]))`;
+  const networkTransmitRateQuery = `sum(rate(node_network_transmit_bytes_total[30s]))`;
   const totalNetworkReceivedQuery = `sum(node_network_receive_bytes_total)`;
   const totalNetworkTransmittedQuery = `sum(node_network_transmit_bytes_total)`;
 
@@ -106,14 +118,16 @@ const getNetworkMetrics = async (address) => {
 };
 
 const getDiskMetrics = async (address) => {
-  const readRateQuery = `rate(node_disk_read_bytes_total{device="disk0"}[10s])`;
-  const writeRateQuery = `rate(node_disk_written_bytes_total{device="disk0"}[10s])`;
-  const readOperationsQuery = `node_disk_reads_completed_total{device="disk0"}`;
-  const writeOperationsQuery = `node_disk_writes_completed_total{device="disk0"}`;
-  const totalReadQuery = `node_disk_read_bytes_total{device="disk0"}`;
-  const totalWrittenQuery = `node_disk_written_bytes_total{device="disk0"}`;
-  const totalReadTimeQuery = `node_disk_read_time_seconds_total{device="disk0"}`;
-  const totalWriteTimeQuery = `node_disk_write_time_seconds_total{device="disk0"}`;
+  const deviceName = address === "http://localhost:9090/" ? "disk0" : "xvda";
+
+  const readRateQuery = `rate(node_disk_read_bytes_total{device="${deviceName}"}[30s])`;
+  const writeRateQuery = `rate(node_disk_written_bytes_total{device="${deviceName}"}[30s])`;
+  const readOperationsQuery = `node_disk_reads_completed_total{device="${deviceName}"}`;
+  const writeOperationsQuery = `node_disk_writes_completed_total{device="${deviceName}"}`;
+  const totalReadQuery = `node_disk_read_bytes_total{device="${deviceName}"}`;
+  const totalWrittenQuery = `node_disk_written_bytes_total{device="${deviceName}"}`;
+  const totalReadTimeQuery = `node_disk_read_time_seconds_total{device="${deviceName}"}`;
+  const totalWriteTimeQuery = `node_disk_write_time_seconds_total{device="${deviceName}"}`;
 
   const readRate = convertBytes(await queryPrometheus(readRateQuery, address));
   const writeRate = convertBytes(
@@ -146,90 +160,9 @@ const getDiskMetrics = async (address) => {
   };
 };
 
-const getDbCpuMetrics = async (address) => {
-  const cpuUsageQuery = `(100 * sum(rate(hardware_process_cpu_kernel_milliseconds{process_port="27017"}[1m]) +
-    rate(hardware_process_cpu_user_milliseconds{process_port="27017"}[1m]))) / sum(rate(hardware_system_cpu_kernel_milliseconds[1m]) +
-    rate(hardware_system_cpu_user_milliseconds[1m]) + rate(hardware_system_cpu_io_wait_milliseconds[1m]))`;
-
-  const cpuUsage = parseFloat(
-    await queryPrometheus(cpuUsageQuery, address),
-  ).toFixed(2);
-
-  return { mainDisplay: [`${cpuUsage} %`] };
-};
-
-const getDbNetworkMetrics = async (address) => {
-  const networkReceivedRateQuery = `avg(rate(hardware_system_network_bytes_in_bytes[1m]))`;
-  const networkTransmitRateQuery = `avg(rate(hardware_system_network_bytes_out_bytes[1m]))`;
-
-  const networkReceivedRate = convertBytes(
-    await queryPrometheus(networkReceivedRateQuery, address),
-  );
-  const networkTransmitRate = convertBytes(
-    await queryPrometheus(networkTransmitRateQuery, address),
-  );
-
-  return {
-    mainDisplay: [`${networkReceivedRate}`, `${networkTransmitRate}`],
-  };
-};
-
-const getDbMemoryMetrics = async (address) => {
-  const memoryUsageQuery = `avg(100 - (hardware_system_memory_mem_free_kilobytes / hardware_system_memory_mem_total_kilobytes * 100))`;
-
-  const memoryUsage = parseFloat(
-    await queryPrometheus(memoryUsageQuery, address),
-  ).toFixed(2);
-
-  return { mainDisplay: [`${memoryUsage}%`] };
-};
-
-const getDbDiskMetrics = async (address) => {
-  const diskUsageQuery = `avg(100 * (hardware_disk_metrics_disk_space_used_bytes / (hardware_disk_metrics_disk_space_used_bytes + hardware_disk_metrics_disk_space_free_bytes)))`;
-  const readRateQuery = `avg(rate(hardware_disk_metrics_sectors_read[20s]))`;
-  const writeRateQuery = `avg(rate(hardware_disk_metrics_sectors_written[20s]))`;
-  const totalReadQuery = `avg(hardware_disk_metrics_read_count)`;
-  const totalWrittenQuery = `avg(hardware_disk_metrics_write_count)`;
-  const totalDiskReadTimeQuery = `avg(hardware_disk_metrics_read_time_milliseconds)`;
-  const totalDiskWriteTimeQuery = `avg(hardware_disk_metrics_write_time_milliseconds)`;
-
-  const diskUsage = parseFloat(
-    await queryPrometheus(diskUsageQuery, address),
-  ).toFixed(2);
-  const readSpeed = parseFloat(
-    await queryPrometheus(readRateQuery, address),
-  ).toFixed(2);
-  const writeSpeed = parseFloat(
-    await queryPrometheus(writeRateQuery, address),
-  ).toFixed(2);
-  const totalRead = Math.round(await queryPrometheus(totalReadQuery, address));
-  const totalWritten = Math.round(
-    await queryPrometheus(totalWrittenQuery, address),
-  );
-  const totalDiskReadTime = Math.round(
-    await queryPrometheus(totalDiskReadTimeQuery, address),
-  );
-  const totalDiskWriteTime = Math.round(
-    await queryPrometheus(totalDiskWriteTimeQuery, address),
-  );
-
-  return {
-    mainDisplay: [readSpeed, writeSpeed],
-    diskUsage: `${diskUsage} %`,
-    totalRead: `${totalRead}`,
-    totalWritten: `${totalWritten}`,
-    totalDiskReadTime: `${totalDiskReadTime}`,
-    totalDiskWriteTime: `${totalDiskWriteTime}`,
-  };
-};
-
 module.exports = {
   getCpuMetrics,
   getMemoryMetrics,
   getNetworkMetrics,
   getDiskMetrics,
-  getDbCpuMetrics,
-  getDbNetworkMetrics,
-  getDbMemoryMetrics,
-  getDbDiskMetrics,
 };
