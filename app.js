@@ -15,7 +15,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.LOCALHOST_FRONTEND,
+    origin: process.env.FRONTEND_URL,
     methods: "GET",
   },
 });

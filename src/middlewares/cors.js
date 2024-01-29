@@ -1,7 +1,7 @@
 const cors = require("cors");
 
 const corsOptions = {
-  origin: process.env.LOCALHOST_FRONTEND,
+  origin: process.env.FRONTEND_URL,
 };
 
 module.exports = cors(corsOptions);
