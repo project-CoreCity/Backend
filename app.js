@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const usersRouter = require("./src/routes/users");
 const adminUsersRouter = require("./src/routes/adminUsers");
+const healthCheckRouter = require("./src/routes/healthCheck");
 const connectDatabase = require("./src/config/database");
 const corsMiddleware = require("./src/middlewares/cors");
 const setupMonitoringSocket = require("./src/sockets/monitor");
@@ -32,6 +33,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/admin", adminUsersRouter);
+app.use("/api/v1/health", healthCheckRouter);
 app.use((req, res) => {
   res.status(404).send("Not Found");
 });
