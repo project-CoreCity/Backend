@@ -118,7 +118,7 @@ const getNetworkMetrics = async (address) => {
 };
 
 const getDiskMetrics = async (address) => {
-  const deviceName = address === "http://localhost:9090/" ? "disk0" : "xvda";
+  const deviceName = address === "http://localhost:9090/" ? "disk0" : "nvme0n1";
 
   const readRateQuery = `rate(node_disk_read_bytes_total{device="${deviceName}"}[30s])`;
   const writeRateQuery = `rate(node_disk_written_bytes_total{device="${deviceName}"}[30s])`;
