@@ -27,7 +27,7 @@
 - [한국어](README.ko.md)
 - [English](README.md)
 
-## 목차
+## Contents
 
 - [Overview](#overview)
 - [Key features & Technology Stack](#key-features--technology-stack)
