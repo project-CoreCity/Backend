@@ -105,6 +105,8 @@ The Core City project provides a platform that allows for an intuitive understan
 
 ## Demonstration
 
+**Demo site**: https://core-city.net/
+
 <br>
 
 <div align="center">
