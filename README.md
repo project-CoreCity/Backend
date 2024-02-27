@@ -446,7 +446,7 @@ npm install
 Create a .env file in the project root directory.
 
 ```bash
-CONNECTION_URI= # 여러분의 MongoDB Connection String을 입력해주세요.
+CONNECTION_URI= # Please enter your MongoDB Connection String.
 
 FRONTEND_URL=http://localhost:5173 # The default port for the project's frontend is 5173.
 
